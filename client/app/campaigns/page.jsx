@@ -1,78 +1,75 @@
-"use client"; // Required for client-side components
-import React, { useEffect, useState } from "react";
-import { useGamerCrowdLending } from "@/context/CrowdLending"; // Import your context
+"use client";
+import { useState } from "react";
 import { ethers } from "ethers";
-import { useRouter } from "next/navigation"; // For programmatic navigation
+import WalletInfo from "@/components/WalletInfo";
+import { usePlaiaZone } from "@/context/PlaiaZone";
+import CampaignCard from "@/components/CampaignCard";
+import Navbar from "@/components/Navbar"; // Import Navbar
 
-const Campaigns = () => {
-  const { fetchCampaigns, campaigns } = useGamerCrowdLending(); // Destructure the function to get campaigns
-  const [loading, setLoading] = useState(true); // To manage loading state
-  const router = useRouter(); // Initialize useRouter for navigation
+const CampaignListPage = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const { campaigns } = usePlaiaZone();  // Fetch campaigns from PlaiaZone context
 
-  // Fetch campaigns on component mount
-  const getCampaigns = async () => {
-    try {
-      setLoading(true);
-      await fetchCampaigns(); // Fetch the campaigns from the contract
-    } catch (error) {
-      console.error("Error fetching campaigns:", error);
-    } finally {
-      setLoading(false); // Stop loading once the campaigns are fetched
-    }
+  // Convert campaign object to more readable form for CampaignCard component
+  const parseCampaignData = (campaign, index) => {
+    return {
+      index, // Add index for unique navigation
+      owner: campaign[0], // Address of the campaign owner
+      title: campaign[1], // Campaign title
+      description: campaign[2], // Campaign description
+      target: ethers.formatUnits(campaign[3]).toString(), // Target amount in wei (needs to be converted for display)
+      repaymentAmount: ethers.formatUnits(campaign[4]).toString(), // Repayment amount in wei (if it's a loan)
+      deadline: new Date(Number(campaign[5]) * 1000).toLocaleDateString(), // Convert UNIX timestamp to date
+      campaignType: campaign[7] === 1n ? "Loan" : "Donation", // Check type: 1 for Loan, otherwise Donation
+    };
   };
 
-  useEffect(() => {
-    getCampaigns(); // Run the function when component mounts
-  }, []);
+  // Convert and sort campaigns by deadline (latest first)
+  const parsedCampaigns = campaigns
+    .map(parseCampaignData)
+    .sort((a, b) => new Date(b.deadline) - new Date(a.deadline)); // Sort by deadline, newest first
 
-  // Handle card click to navigate to the campaign detail page
-  const handleCardClick = (id) => {
-    router.push(`/campaign/${id}`); // Navigate to campaign/[id]
+  // Filter campaigns by search term
+  const filteredCampaigns = parsedCampaigns.filter((campaign) =>
+    campaign.title.toLowerCase().includes(searchTerm)
+  );
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value.toLowerCase());
   };
 
   return (
-    <div className="p-6 text-white">
-      <h1 className="text-3xl font-bold mb-4">All Campaigns</h1>
+    <div className="min-h-screen">
+      {/* Navbar Component */}
+      <Navbar />
 
-      {/* Display loading message while fetching campaigns */}
-      {loading && <p>Loading campaigns...</p>}
-
-      {/* Display campaigns in a grid if available */}
-      {!loading && campaigns.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {campaigns.map((campaign, index) => (
-            <div
-              key={index}
-              onClick={() => handleCardClick(index)} // Navigate to campaign page on click
-              className="cursor-pointer bg-primaryBlue p-4 rounded-lg shadow-lg transition-transform transform hover:scale-105"
-            >
-              <h2 className="text-xl font-semibold">{campaign.title}</h2>
-              <p className="mt-2">{campaign.description}</p>
-
-              {/* Convert BigInt to string for safe display */}
-              <p className="mt-4">Target: {ethers.formatEther(campaign.target.toString())} AIA</p>
-              <p className="mt-2">Collected: {ethers.formatEther(campaign.amountCollected.toString())} AIA</p>
-
-              {/* Convert deadline (timestamp) to a proper date */}
-              <p className="mt-2">
-                Deadline: {new Date(Number(campaign.deadline) * 1000).toLocaleString()}
-              </p>
-
-              <p className="mt-2">
-                {campaign.isRepaid ? "Status: Repaid" : "Status: Active"}
-              </p>
-
-              <p className="mt-2">
-                Campaign Type: {campaign.campaignType === 1 ? "Loan" : "Donation"}
-              </p>
-            </div>
-          ))}
+      <div className="py-10 px-6">
+        {/* Search Bar */}
+        <div className="w-full max-w-md mx-auto mb-8">
+          <input
+            type="text"
+            placeholder="Search campaigns by title..."
+            className="w-full px-4 py-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-purple-500 outline-none"
+            value={searchTerm}
+            onChange={handleSearch}
+          />
         </div>
-      ) : (
-        !loading && <p>No campaigns available.</p>
-      )}
+
+        {/* Campaigns List */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+          {filteredCampaigns.length > 0 ? (
+            filteredCampaigns.map((campaign) => (
+              <CampaignCard key={campaign.index}  {...campaign} />
+            ))
+          ) : (
+            <p className="text-center text-gray-500 dark:text-gray-400 col-span-full">
+              No campaigns found.
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
-export default Campaigns;
+export default CampaignListPage;

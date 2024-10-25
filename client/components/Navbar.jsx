@@ -1,23 +1,36 @@
-import React from 'react';
-import Image from 'next/image';
-import WalletInfo from './WalletInfo';
+"use client";
+import { useState, useEffect } from "react";
+import ConnectWallet from "./ConnectWallet";
+import { usePlaiaZone } from "@/context/PlaiaZone";
+import MetaMaskLoader from "./MetaMaskLoader";
+import WalletInfo from "./WalletInfo";
 
-const Navbar = () => {
+export default function Navbar() {
+  const [darkMode, setDarkMode] = useState(false);
+  const { loading, account, balance } = usePlaiaZone();
+
+  useEffect(() => {
+    // Update the HTML class based on the dark mode state
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [darkMode]);
+
   return (
-    <nav className=" text-white p-4 flex items-center justify-between ">
-      {/* App Name */}
-      <div className="text-2xl font-extrabold tracking-tight">
-        Plaia Zone
-      </div>
-      
-      {/* Wallet Info */}
-      <div className="flex items-center space-x-4 mx-2">
-        <WalletInfo />
-        {/* AIA Chain Logo (optional additional logo or branding) */}
-        
-      </div>
-    </nav>
+    <>
+      <MetaMaskLoader loading={loading} />
+      <nav className="p-6 flex justify-between items-center">
+        <div className="text-2xl font-bold">Plaia Zone</div>
+        <div className="flex items-center">
+          {account ? (
+            <WalletInfo account={account} balance={balance} />
+          ) : (
+            <ConnectWallet loading={loading} />
+          )}
+        </div>
+      </nav>
+    </>
   );
-};
-
-export default Navbar;
+}

@@ -1,60 +1,49 @@
-"use client"
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import React from 'react';
+"use client";
+import { usePlaiaZone } from "@/context/PlaiaZone";
+import { useRouter } from "next/navigation";
 
-const Header = () => {
-    const router = useRouter();
+
+export default function Header() {
+  const router = useRouter();
+  const { isConnected, connectWallet } = usePlaiaZone();
+  
+  const handleRequestClick = async () => {
+    if (isConnected) {
+      router.push("/request");
+    }
+    if (!isConnected) {
+      // If the wallet is not connected, prompt the user to connect it
+      await connectWallet();
+      if (isConnected) {
+        router.push("/request");
+      }
+    }
+    
+    // Proceed to the request page once the wallet is connected
+    
+  };
+
   return (
-    <div className="relative flex flex-col items-center text-center space-y-4 py-8 text-white">
-      {/* Floating Images */}
-      <Image
-        src="/game.png"
-        height={100}
-        width={100}
-        alt="Gaming Image"
-        className="absolute top-10 left-10 animate-float"
-      />
-      <Image
-        src="/man-wearing-vr-glasses-gaming.png"
-        height={100}
-        width={100}
-        alt="VR Gaming Image"
-        className="absolute top-20 right-16 animate-float delay-200"
-      />
-      <Image
-        src="/money.png"
-        height={100}
-        width={100}
-        alt="Money Image"
-        className="absolute top-28 left-32 animate-float delay-400"
-      />
-      
-      {/* Main Header Image */}
-      <Image
-        src="/header.webp"
-        height={200}
-        width={200}
-        alt="Main Header Image"
-        className="relative"
-      />
-
-      {/* Tagline */}
-      <h1 className="text-2xl font-bold">
-        Fueling Gamers with Blockchain Power – Play, Fund, Succeed
+    <header className="text-center my-12 px-4">
+      <h1 className="text-5xl font-bold mb-6">
+        Help your fellow <span className="text-blue-500">Gamers</span> and Earn
       </h1>
 
-      {/* Buttons */}
-      <div className="space-x-4 mt-4">
-        <button onClick={()=>{router.push("/request-donation")}} className="bg-primaryBlue text-white py-2 px-6 rounded-md shadow-lg hover:bg-blue-800 transition duration-300">
-          Need Funds?
+      <p className="text-xl mb-8 text-gray-600 dark:text-gray-300">
+        Empowering Gamers, Connecting Worlds – Fund, Play, Thrive on AIA
+      </p>
+
+      <div className="flex justify-center space-x-4">
+        <button onClick={()=>{router.push("campaigns")}} className="px-8 py-4 bg-purple-600 text-white rounded-lg font-bold transition duration-300 ease-in-out hover:bg-purple-700">
+          Fund Your Fellows
         </button>
-        <button onClick={()=>{router.push("/campaigns")}} className="bg-accentPink text-white py-2 px-6 rounded-md shadow-lg hover:bg-pink-700 transition duration-300">
-          Fund Your Fellow Gamers
+        <button
+          onClick={handleRequestClick}
+          className="px-8 py-4 bg-pink-600 dark:bg-pink-500 text-white rounded-lg font-bold transition duration-300 ease-in-out hover:bg-pink-700"
+        >
+          Request/Borrow Funds
         </button>
       </div>
-    </div>
+    </header>
   );
-};
-
-export default Header;
+}

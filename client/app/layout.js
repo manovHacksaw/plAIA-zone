@@ -1,6 +1,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import { GamerCrowdLendingProvider } from "@/context/CrowdLending";
+import { PlaiaZoneProvider } from "../context/PlaiaZone";
+import DarkModeToggle from "@/components/DarkModeToggle";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -22,12 +24,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased font-rem p-10 mx-20 bg-gray-800`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased px-24`}
       >
-        <GamerCrowdLendingProvider>
-        {children}
-        </GamerCrowdLendingProvider>
-     
+        <ThemeProvider>   <PlaiaZoneProvider>  {children} <DarkModeToggle/></PlaiaZoneProvider></ThemeProvider>
+      
+
+       
       </body>
     </html>
   );
