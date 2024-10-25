@@ -2,26 +2,37 @@ import React from 'react';
 import CampaignCard from './CampaignCard';
 
 const CampaignList = ({ campaigns }) => {
+  // Sort campaigns by deadline in ascending order
+  const sortedCampaigns = [...campaigns].sort(
+    (a, b) => new Date(a.deadline) - new Date(b.deadline)
+  );
+
   return (
     <div className="w-full flex flex-col items-center">
-      <h2 className="text-3xl font-bold text-center mb-6 text-white">Campaigns</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {campaigns.length > 0 ? (
-          campaigns.map((campaign, index) => (
+      <h2 className="text-4xl font-bold text-center mb-8 text-gray-800 dark:text-white">
+        Campaigns
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-10">
+        {sortedCampaigns.length > 0 ? (
+          sortedCampaigns.map((campaign, index) => (
             <CampaignCard
               key={index}
+              index={index}
               owner={campaign.owner}
               title={campaign.title}
               description={campaign.description}
               target={campaign.target}
+              fundedAmount={campaign.fundedAmount}
               repaymentAmount={campaign.repaymentAmount}
               deadline={campaign.deadline}
               campaignType={campaign.campaignType}
-              handleClick={() => console.log(`Viewing campaign: ${campaign.title}`)} // Replace with navigation or view logic
+              handleClick={() => console.log(`Viewing campaign: ${campaign.title}`)}
             />
           ))
         ) : (
-          <p className="text-gray-400 text-center w-full">No campaigns found.</p>
+          <p className="text-gray-500 text-center col-span-full">
+            No campaigns found.
+          </p>
         )}
       </div>
     </div>

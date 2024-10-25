@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
@@ -7,8 +7,25 @@ export function ThemeProvider({ children }) {
   const [darkMode, setDarkMode] = useState(false);
 
   useEffect(() => {
+    // Check for a saved theme; if none, use system preference
     const savedTheme = localStorage.getItem("theme");
-    setDarkMode(savedTheme === "dark");
+    if (savedTheme) {
+      setDarkMode(savedTheme === "dark");
+      if (savedTheme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    } else {
+      // Default to system preference
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      setDarkMode(prefersDark);
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
   }, []);
 
   const toggleDarkMode = () => {

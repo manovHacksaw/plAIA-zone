@@ -186,7 +186,7 @@ export const PlaiaZoneProvider = ({ children }) => {
     try {
       const contract = await loadContract(); // Load the contract instance
       const campaign = await contract.getCampaignById(id); // Fetch campaign details
-
+  
       // Parse the campaign data into an easy-to-use format
       const parsedCampaign = {
         id, // Campaign ID
@@ -197,8 +197,10 @@ export const PlaiaZoneProvider = ({ children }) => {
         repaymentAmount: ethers.formatUnits(campaign[4], "ether").toString(), // Repayment amount in ether
         deadline: new Date(Number(campaign[5]) * 1000).toLocaleDateString(), // Convert UNIX timestamp to readable date
         campaignType: campaign[7] === 1n ? "Loan" : "Donation", // Type: Loan or Donation
+        isRepaid: campaign[8], // New: Repayment status
+        isWithdrawn: campaign[9], // New: Withdrawal status
       };
-
+  
       setLoading(false);
       return parsedCampaign;
     } catch (error) {
@@ -207,7 +209,6 @@ export const PlaiaZoneProvider = ({ children }) => {
       throw error; // Re-throw the error for potential handling by calling function
     }
   };
-
   const fundCampaign = async (id, amount) => {
     setLoading(true);
     try {
@@ -220,17 +221,17 @@ export const PlaiaZoneProvider = ({ children }) => {
         value: amount, // Amount being contributed (in Wei)
       });
 
-      // Wait for the transaction to be confirmed
+      
       await transaction.wait();
 
-      // Optionally, update local state or perform any action after funding
-      alert("Successfully funded the campaign!");
+      
+      return true;
 
       // Reload the campaign data or update the UI as necessary
       // You might want to call fetchCampaign again here or update your state
     } catch (error) {
       console.error("Error funding campaign:", error);
-      alert("Failed to fund the campaign. Please try again.");
+      return false;
     } finally {
       setLoading(false); // Stop the loading state
     }

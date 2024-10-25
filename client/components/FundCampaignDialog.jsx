@@ -9,32 +9,39 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"; // Make sure your Dialog component is imported correctly
+} from "@/components/ui/dialog";
 import { usePlaiaZone } from "@/context/PlaiaZone";
-import { ethers } from "ethers"; // Import ethers for conversion
+import { ethers } from "ethers";
+import { useRouter } from "next/navigation";
+import MetaMaskLoader from "./MetaMaskLoader";
 
-const FundCampaignDialog = ({ campaignId, title }) => {
-  const { fundCampaign } = usePlaiaZone(); // Ensure you have a fundCampaign function to handle the logic
+const FundCampaignDialog = ({ campaignId, title, remainingAmount }) => {
+  const { fundCampaign, loading } = usePlaiaZone();
   const [amount, setAmount] = useState("");
   const [agreed, setAgreed] = useState(false);
-  const [loading, setLoading] = useState(false);
+  
+  const router = useRouter();
 
   const handleFund = async () => {
-    if (!agreed || !amount) return;
+    if (!agreed || !amount || parseFloat(amount) > remainingAmount) return;
     try {
-      setLoading(true);
-      const weiAmount = ethers.parseEther(amount); // Convert the amount from ETH to Wei
-      await fundCampaign(campaignId, weiAmount); // Call the function to fund the campaign
-      alert("Funding successful!"); // Optional feedback to the user
+      
+      const weiAmount = ethers.parseEther(amount); // Convert to Wei
+      const success = await fundCampaign(campaignId, weiAmount);
+      if(success){
+        window.location.reload();
+      }
     } catch (error) {
       console.error("Funding failed:", error);
-      alert("Funding failed. Please try again."); // Optional error message
+      alert("Funding failed. Please try again.");
     } finally {
-      setLoading(false);
+      
     }
   };
 
   return (
+    <>
+    <MetaMaskLoader loading={loading}/>
     <Dialog>
       <DialogTrigger className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
         Fund Campaign
@@ -46,13 +53,13 @@ const FundCampaignDialog = ({ campaignId, title }) => {
               Fund for {title}
             </DialogTitle>
             <DialogDescription className="text-gray-700 dark:text-gray-300">
-              This action cannot be undone. This will contribute to the campaign with the specified amount.
+              This action cannot be undone. You will contribute to the campaign with the specified amount.
             </DialogDescription>
           </DialogHeader>
 
           <div className="mt-4">
             <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Amount (in ETH)
+              Amount (in AIA)
             </label>
             <input
               id="amount"
@@ -61,9 +68,14 @@ const FundCampaignDialog = ({ campaignId, title }) => {
               onChange={(e) => setAmount(e.target.value)}
               className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-300 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Enter amount"
-              min="0" // Add min to ensure positive values
-              step="any" // Allow decimal values
+              min="0"
+              step="any"
             />
+            {amount && parseFloat(amount) > remainingAmount && (
+              <p className="text-red-600 dark:text-red-400 mt-2">
+                Amount exceeds the remaining funding required: {remainingAmount} AIA
+              </p>
+            )}
           </div>
 
           <div className="flex items-center mt-4">
@@ -81,15 +93,16 @@ const FundCampaignDialog = ({ campaignId, title }) => {
 
           <button
             onClick={handleFund}
-            disabled={!agreed || !amount || loading}
+            disabled={!agreed || !amount || loading || parseFloat(amount) > remainingAmount}
             className={`w-full py-2 px-4 mt-6 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700 transition-colors 
-              ${!agreed || !amount || loading ? "bg-gray-400 cursor-not-allowed" : ""}`}
+              ${!agreed || !amount || loading || parseFloat(amount) > remainingAmount ? "bg-gray-400 cursor-not-allowed" : ""}`}
           >
             {loading ? "Processing..." : "Send Amount"}
           </button>
         </div>
       </DialogContent>
-    </Dialog>
+    </Dialog></>
+    
   );
 };
 

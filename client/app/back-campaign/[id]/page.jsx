@@ -1,5 +1,6 @@
 "use client";
 import FundCampaignDialog from "@/components/FundCampaignDialog";
+import Skeleton from "@/components/Skeleton"; // Import the Skeleton component
 import { usePlaiaZone } from "@/context/PlaiaZone";
 import { ethers } from "ethers";
 import { useState, useEffect } from "react";
@@ -12,14 +13,31 @@ const BackCampaignPage = ({ params }) => {
     withdrawFunds,
     account,
     getBackersByCampaignId,
-    repayLoan
+    repayLoan,
   } = usePlaiaZone();
+
+  const {connectWallet} = usePlaiaZone();
+
   const [campaign, setCampaign] = useState(null);
   const [fundedAmount, setFundedAmount] = useState("0.000");
   const [isFullyFunded, setIsFullyFunded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [backers, setBackers] = useState([]);
   const [error, setError] = useState(null);
+  const [remaining, setRemaining] = useState(null);
+
+  // New variables to hold campaign state
+  const [isWithdrawn, setIsWithdrawn] = useState(false);
+  const [isRepaid, setIsRepaid] = useState(false);
+
+  const formatDate = (dateString) => {
+    const [day, month, year] = dateString.split("/").map(Number);
+    const monthNames = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    ];
+    return `${day} ${monthNames[month - 1]} ${year}`;
+  };
 
   useEffect(() => {
     const fetchCampaign = async () => {
@@ -28,18 +46,20 @@ const BackCampaignPage = ({ params }) => {
         const campaignData = await getCampaignById(params.id);
         setCampaign(campaignData);
 
-        const backersList = await getBackersByCampaignId(params.id); // Fetch backers
-        setBackers(backersList); // Store backers in state
+        const backersList = await getBackersByCampaignId(params.id);
+        setBackers(backersList);
 
-        // Fetch funded amount and check if the campaign is fully funded
         const remaining = await getRemainingAmount(params.id);
-        const target = campaignData.target; // Convert target to ether for calculation
-        console.log(remaining);
-        console.log(target);
+        setRemaining(remaining);
+        const target = campaignData.target;
         setFundedAmount((target - remaining).toString());
 
         const fullyFunded = await isCampaignFullyFunded(params.id);
         setIsFullyFunded(fullyFunded);
+
+        // Set withdrawn and repaid status
+        setIsWithdrawn(campaignData.isWithdrawn);
+        setIsRepaid(campaignData.isRepaid);
       } catch (err) {
         console.error("Failed to fetch campaign:", err);
         setError("Could not load campaign details.");
@@ -50,10 +70,15 @@ const BackCampaignPage = ({ params }) => {
     fetchCampaign();
   }, [params.id]);
 
+  useEffect(()=>{
+    connectWallet();
+  }, [])
+
   const handleWithdraw = async () => {
     try {
       await withdrawFunds(params.id);
       alert("Funds withdrawn successfully!");
+      setIsWithdrawn(true); // Update the state after withdrawal
     } catch (error) {
       console.error("Withdraw failed:", error);
       alert("Failed to withdraw funds.");
@@ -64,18 +89,51 @@ const BackCampaignPage = ({ params }) => {
     try {
       await repayLoan(params.id, campaign.repaymentAmount);
       alert("Loan repaid successfully!");
+      setIsRepaid(true); // Update the state after repayment
     } catch (error) {
       console.error("Repayment failed:", error);
       alert("Failed to repay loan.");
     }
   };
 
+  // Loading state
   if (loading)
     return (
-      <div className="text-center text-lg font-semibold dark:text-gray-200">
-        Loading...
+      <div className="flex flex-col items-center min-h-screen py-12 px-6">
+        <div className="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-lg rounded-lg p-10">
+          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-8 text-center">
+            <Skeleton className="h-8 w-2/4 mb-4" />
+          </h1>
+
+          <div className="text-gray-700 dark:text-gray-300 mb-8 space-y-4">
+            <Skeleton className="h-6 w-full mb-2" />
+            <Skeleton className="h-6 w-1/2 mb-2" />
+            <Skeleton className="h-6 w-1/3 mb-2" />
+            <Skeleton className="h-6 w-1/4 mb-2" />
+            <Skeleton className="h-6 w-1/2 mb-2" />
+          </div>
+
+          <div className="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+             
+            </h2>
+            <Skeleton className="h-6 w-full mb-2" />
+            <Skeleton className="h-6 w-full mb-2" />
+          </div>
+
+          <Skeleton className="h-6 w-1/2 mb-4" />
+          <Skeleton className="h-4 w-full mb-4" />
+          <Skeleton className="h-4 w-full mb-4" />
+
+          <div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-5 mb-8">
+            <p className="font-semibold"></p>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-3/4 mb-2" />
+          </div>
+        </div>
       </div>
     );
+
   if (error)
     return (
       <div className="text-center text-red-600 font-semibold dark:text-red-400">
@@ -83,22 +141,22 @@ const BackCampaignPage = ({ params }) => {
       </div>
     );
 
+  const isDeadlinePassed = Date.now() > new Date(campaign.deadline).getTime();
+
   return (
-    <div className="flex flex-col items-center bg-gray-100 dark:bg-gray-900 min-h-screen py-10 px-4">
-      <div className="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8">
-        <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-6 text-center">
+    <div className="flex flex-col items-center min-h-screen py-12 px-6 ">
+      <div className="w-full max-w-4xl bg-white dark:bg-gray-800  shadow-[5px_4px_8px_5px_rgba(0,0,0,0.2)] rounded-lg p-10">
+        <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-8 text-center">
           {campaign.title}
         </h1>
 
-        <div className="text-gray-700 dark:text-gray-300 mb-6">
-          <p>
-            <strong>Description:</strong> {campaign.description}
-          </p>
+        <div className="text-gray-700 dark:text-gray-300 mb-8 space-y-4">
+          <p>{campaign.description}</p>
           <p className="mt-2">
             <strong>Target Amount:</strong> {campaign.target} AIA
           </p>
           <p className="mt-2">
-            <strong>Funded Amount:</strong> {fundedAmount} AIA
+            <strong>Remaining Amount:</strong> {remaining} AIA
           </p>
           {campaign.campaignType === "Loan" && (
             <p className="mt-2">
@@ -106,23 +164,23 @@ const BackCampaignPage = ({ params }) => {
             </p>
           )}
           <p className="mt-2">
-            <strong>Deadline:</strong> {campaign.deadline}
+            <strong>Deadline:</strong> {formatDate(campaign.deadline)}
           </p>
           <p className="mt-2">
             <strong>Type:</strong> {campaign.campaignType}
           </p>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-md mb-6">
-          <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
-            Backers
+        <div className="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg mb-8">
+          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+            Funded By:
           </h2>
           {backers.length > 0 ? (
-            <ul>
+            <ul className="space-y-2">
               {backers.map((backer, index) => (
                 <li
                   key={index}
-                  className="flex justify-between text-gray-600 dark:text-gray-300 mb-2"
+                  className="flex justify-between text-gray-600 dark:text-gray-300"
                 >
                   <span>{backer.address}</span>
                   <span>{backer.amount} AIA</span>
@@ -134,9 +192,100 @@ const BackCampaignPage = ({ params }) => {
           )}
         </div>
 
-        <div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-4 mb-6 rounded-md">
+        <p className="text-lg font-bold text-gray-800 dark:text-[#e6e6ea] mb-2">
+          {Math.min(
+            (parseFloat(fundedAmount) / parseFloat(campaign.target)) * 100,
+            100
+          ).toFixed(0)}{" "}
+          % Funded
+        </p>
+
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mt-4 mb-8 overflow-hidden">
+          <div
+            className="bg-purple-500 h-full rounded-full transition-all duration-1000"
+            style={{
+              width: `${Math.min(
+                (parseFloat(fundedAmount) / parseFloat(campaign.target)) * 100,
+                100
+              ).toFixed(0)}%`,
+            }}
+          ></div>
+        </div>
+
+       
+
+{account?.toLowerCase() === campaign.owner.toLowerCase() && 
+  ((!isFullyFunded && !isDeadlinePassed) && !isWithdrawn && !isRepaid) && (
+    <p className="text-gray-500 dark:text-gray-400 italic mb-6">
+      Once the campaign is fully funded or the deadline has passed you
+      can withdraw the funds!
+    </p>
+)}
+
+{isFullyFunded && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase() && (
+  <p className="text-gray-500 dark:text-gray-400 mb-4">
+    Congratulations! Your campaign got fully funded, you can withdraw
+    the funds to your wallet address now.
+  </p>
+)}
+
+{isDeadlinePassed && !isFullyFunded && !isWithdrawn && (
+  <p className="text-gray-500 dark:text-gray-400 mb-4">
+    The deadline has passed. You may withdraw the funds now.
+  </p>
+)}
+
+{isRepaid && account?.toLowerCase() === campaign.owner.toLowerCase() && (
+  <div className="bg-green-100 dark:bg-green-700 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-200 p-5 mb-8">
+    <p className="font-semibold">Thank You!</p>
+    <p className="text-sm mt-2 leading-relaxed">
+      Thank you for repaying your loan and maintaining the trust within our community. We appreciate your commitment to upholding transparency and trust on Plaia Zone.
+    </p>
+  </div>
+)}
+
+{account?.toLowerCase() !== campaign.owner.toLowerCase() && isRepaid && (
+  <div className="bg-green-100 dark:bg-green-700 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-200 p-5 mb-8">
+    <p className="font-semibold">Loan Repaid</p>
+    <p className="text-sm mt-2 leading-relaxed">
+      Plaia Zone thanks the campaign owner for fulfilling their commitment by repaying the loan. This action strengthens the trust and integrity within our community. 
+    </p>
+  </div>
+)}
+
+
+{isFullyFunded && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase() && (
+  <button
+    onClick={handleWithdraw}
+    className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition mb-4"
+  >
+    Withdraw Funds
+  </button>
+)}
+
+{isDeadlinePassed && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase()  && (
+  <button
+    onClick={handleWithdraw}
+    className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition mb-4"
+  >
+    Withdraw Funds
+  </button>
+)}
+
+
+{campaign.campaignType === "Loan" &&
+  (isFullyFunded || isDeadlinePassed) && !isRepaid && (
+    <button
+      onClick={handleRepayLoan}
+      className="bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 transition"
+    >
+      Repay Loan
+    </button>
+)}
+
+<div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-5 mb-8">
           <p className="font-semibold">Terms and Conditions</p>
-          <p className="text-sm mt-2">
+          <p className="text-sm mt-2 leading-relaxed">
             Plaia Zone is primarily intended for donations to support gamers.
             While some campaigns may involve loans where repayment is expected,
             Plaia Zone is not responsible for ensuring that these repayments are
@@ -145,38 +294,18 @@ const BackCampaignPage = ({ params }) => {
           </p>
         </div>
 
-        {account?.toLowerCase() !== campaign.owner.toLowerCase() ? (
-          <FundCampaignDialog title={campaign.title} campaignId={campaign.id} />
-        ) : (
-          <div className="text-center">
-            <p className="text-gray-500 dark:text-gray-400 italic mb-4">
-              You are the owner of this campaign.
-            </p>
-            {isFullyFunded ? (
-              <button
-                onClick={handleWithdraw}
-                className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition mb-4"
-              >
-                Withdraw Funds
-              </button>
-            ) : (
-              <p className="text-yellow-600 dark:text-yellow-300 font-semibold mb-4">
-                Campaign is not fully funded yet.
-              </p>
-            )}
-            
-            {campaign.campaignType === "Loan" &&
-              (isFullyFunded ||
-                Date.now() > new Date(campaign.deadline).getTime()) && (
-                <button
-                  onClick={handleRepayLoan}
-                  className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
-                >
-                  Repay Loan
-                </button>
-              )}
-          </div>
-        )}
+ 
+        {account?.toLowerCase() !== campaign.owner.toLowerCase() &&
+          !isFullyFunded &&
+          !isDeadlinePassed && (
+            <FundCampaignDialog
+              title={campaign.title}
+              campaignId={campaign.id}
+              remainingAmount={remaining}
+            />
+          )}
+
+
       </div>
     </div>
   );

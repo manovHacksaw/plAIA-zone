@@ -1,12 +1,32 @@
 import Image from 'next/image';
-import React from 'react';
-import { useTheme } from '@/context/ThemeContext';
+import React, { useEffect, useState } from 'react';
 
 const WalletInfo = ({ account, balance }) => {
-  const { darkMode } = useTheme();
+  const [darkMode, setDarkMode] = useState(false);
 
-  const formatAddress = (address) => `${address.slice(0, 12)}...${address.slice(-4)}`;
-  const formatBalance = (balance) => parseFloat(balance).toFixed(5);
+  useEffect(() => {
+    // Check and set dark mode based on the theme stored in local storage
+    const savedTheme = localStorage.getItem("theme");
+    setDarkMode(savedTheme === "dark");
+  }, []);
+
+  const formatAddress = (address) => {
+    return `${address.slice(0, 12)}...${address.slice(-4)}`;
+  };
+
+  const formatBalance = (balance) => {
+    const balanceNumber = parseFloat(balance);
+    const balanceStr = balanceNumber.toString();
+    if (balanceStr.includes('.')) {
+      const decimalPart = balanceStr.split('.')[1];
+      if (decimalPart.length > 5) {
+        return balanceNumber.toFixed(5);
+      }
+    }
+    return balanceNumber.toString();
+  };
+
+  
 
   return (
     <div

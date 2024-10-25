@@ -23,14 +23,16 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <ThemeProvider>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased px-24`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased px-24 dark:bg-[#1f2022]`}
       >
-        <ThemeProvider>   <PlaiaZoneProvider>  {children} <DarkModeToggle/></PlaiaZoneProvider></ThemeProvider>
+           <PlaiaZoneProvider>  {children} <DarkModeToggle/></PlaiaZoneProvider>
       
 
        
       </body>
+      </ThemeProvider>
     </html>
   );
 }

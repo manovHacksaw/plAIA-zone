@@ -1,7 +1,7 @@
 "use client";
 import { usePlaiaZone } from "@/context/PlaiaZone";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-
 
 export default function Header() {
   const router = useRouter();
@@ -14,17 +14,13 @@ export default function Header() {
     if (!isConnected) {
       // If the wallet is not connected, prompt the user to connect it
       await connectWallet();
-      if (isConnected) {
-        router.push("/request");
-      }
+    
+      router.push("/request");
     }
-    
-    // Proceed to the request page once the wallet is connected
-    
   };
 
   return (
-    <header className="text-center my-12 px-4">
+    <header className="text-center flex flex-col items-center justify-center my-12 px-4">
       <h1 className="text-5xl font-bold mb-6">
         Help your fellow <span className="text-blue-500">Gamers</span> and Earn
       </h1>
@@ -33,8 +29,21 @@ export default function Header() {
         Empowering Gamers, Connecting Worlds – Fund, Play, Thrive on AIA
       </p>
 
-      <div className="flex justify-center space-x-4">
-        <button onClick={()=>{router.push("campaigns")}} className="px-8 py-4 bg-purple-600 text-white rounded-lg font-bold transition duration-300 ease-in-out hover:bg-purple-700">
+      {/* Invert filter applied to the image */}
+      <Image 
+        src="/headerGIF.gif" 
+        width={200} 
+        height={200} 
+        alt="Inverted Header Image" 
+         className="dark:invert"
+      
+      />
+
+      <div className="flex justify-center p-10 space-x-4">
+        <button 
+          onClick={() => { router.push("campaigns"); }}
+          className="px-8 py-4 bg-purple-600 text-white rounded-lg font-bold transition duration-300 ease-in-out hover:bg-purple-700"
+        >
           Fund Your Fellows
         </button>
         <button

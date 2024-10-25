@@ -5,7 +5,7 @@ const MetaMaskLoader = ({ loading }) => {
   return (
     <>
       {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 font-poppins ">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-9000 font-poppins ">
           <div className="flex flex-col items-center p-10 bg-gray-950 rounded-lg shadow-lg relative ">
             {/* Spinning loader container */}
           
