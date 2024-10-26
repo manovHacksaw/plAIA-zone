@@ -257,7 +257,7 @@ const BackCampaignPage = ({ params }) => {
 
 {account?.toLowerCase() === campaign.owner.toLowerCase() &&
   !isFullyFunded &&
-  isDeadlinePassed && !isWithdrawn (
+  isDeadlinePassed && !isWithdrawn &&  (
     <p className="text-gray-500 dark:text-gray-400 mb-4">
       Your campaign didn't get 100% funded, however you can withdraw the funds to your wallet address {account} now.
     </p>
