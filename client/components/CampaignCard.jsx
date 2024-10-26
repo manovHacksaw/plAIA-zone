@@ -34,11 +34,23 @@ const CampaignCard = ({
   const formatDate = (dateString) => {
     const [day, month, year] = dateString.split("/").map(Number);
     const monthNames = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return `${day} ${monthNames[month - 1]} ${year}`;
   };
+
+ 
 
   // Limit description to 80 words
   const truncateDescription = (text, wordLimit) => {
@@ -51,7 +63,7 @@ const CampaignCard = ({
   return (
     <Link href={`/back-campaign/${index}`}>
       <div
-        className="sm:w-[300px] w-full h-[440px] rounded-lg bg-white dark:bg-[#2a2b36] hover:bg-gray-100 dark:hover:bg-[#34353f] cursor-pointer transition-shadow duration-200 ease-in-out shadow-lg hover:shadow-2xl"
+        className="sm:w-[300px]  w-full h-[440px] rounded-lg bg-white dark:bg-[#2a2b36] hover:bg-gray-100 dark:hover:bg-[#34353f] cursor-pointer transition-shadow duration-200 ease-in-out shadow-lg hover:shadow-2xl"
         onClick={handleClick}
       >
         <div className="flex flex-col justify-between h-full p-6">
@@ -80,7 +92,7 @@ const CampaignCard = ({
             {/* Deadline */}
             <div className="flex flex-col">
               <h4 className="font-semibold text-md text-gray-800 dark:text-[#e6e6ea] leading-5">
-                {Date.now() / 1000 > deadline ? (
+                {Date.now() / 1000 >= deadline ? (
                   <i>Deadline passed</i>
                 ) : (
                   formatDate(deadline)

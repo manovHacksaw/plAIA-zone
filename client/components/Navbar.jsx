@@ -4,15 +4,14 @@ import ConnectWallet from "./ConnectWallet";
 import { usePlaiaZone } from "@/context/PlaiaZone";
 import MetaMaskLoader from "./MetaMaskLoader";
 import WalletInfo from "./WalletInfo";
-import SearchBar from "@/components/SearchBar"; // Import SearchBar component
+import SearchBar from "@/components/SearchBar";
 
 export default function Navbar() {
   const [darkMode, setDarkMode] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // State for search term
+  const [searchTerm, setSearchTerm] = useState("");
   const { loading, account, balance } = usePlaiaZone();
 
   useEffect(() => {
-    // Update the HTML class based on the dark mode state
     if (darkMode) {
       document.documentElement.classList.add("dark");
     } else {
@@ -22,20 +21,17 @@ export default function Navbar() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    // You can add search logic here or pass the searchTerm to a parent component
   };
 
   return (
     <>
       <MetaMaskLoader loading={loading} />
-      <nav className="p-6 flex justify-between items-center">
-        <div className="text-2xl font-bold">Plaia Zone</div>
-    
-        {/* Place SearchBar here */}
-       
-        
+      <nav className="p-4 md:p-6 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="text-xl md:text-2xl font-bold">Plaia Zone</div>
 
-        <div className="flex items-center">
+       
+
+        <div className="flex items-center space-x-4">
           {account ? (
             <WalletInfo account={account} balance={balance} />
           ) : (

@@ -74,7 +74,7 @@ const RequestFundsPage = () => {
         formData.campaignType
       );
       if (success) {
-        router.push("/");
+        router.push("/campaigns");
       } else {
         console.log("ERROR");
       }

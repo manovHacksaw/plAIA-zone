@@ -65,6 +65,7 @@ const FundCampaignDialog = ({ campaignId, title, remainingAmount }) => {
               id="amount"
               type="number"
               value={amount}
+              disabled={loading}
               onChange={(e) => setAmount(e.target.value)}
               className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring focus:ring-blue-300 dark:bg-gray-700 dark:text-gray-200"
               placeholder="Enter amount"

@@ -1,8 +1,8 @@
 "use client";
 import FundCampaignDialog from "@/components/FundCampaignDialog";
+import MetaMaskLoader from "@/components/MetaMaskLoader";
 import Skeleton from "@/components/Skeleton"; // Import the Skeleton component
 import { usePlaiaZone } from "@/context/PlaiaZone";
-import { ethers } from "ethers";
 import { useState, useEffect } from "react";
 
 const BackCampaignPage = ({ params }) => {
@@ -14,14 +14,15 @@ const BackCampaignPage = ({ params }) => {
     account,
     getBackersByCampaignId,
     repayLoan,
+    loading,
   } = usePlaiaZone();
 
-  const {connectWallet} = usePlaiaZone();
+  const { connectWallet } = usePlaiaZone();
 
   const [campaign, setCampaign] = useState(null);
   const [fundedAmount, setFundedAmount] = useState("0.000");
   const [isFullyFunded, setIsFullyFunded] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loadingPage, setLoadingPage] = useState(true);
   const [backers, setBackers] = useState([]);
   const [error, setError] = useState(null);
   const [remaining, setRemaining] = useState(null);
@@ -33,8 +34,18 @@ const BackCampaignPage = ({ params }) => {
   const formatDate = (dateString) => {
     const [day, month, year] = dateString.split("/").map(Number);
     const monthNames = [
-      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
     ];
     return `${day} ${monthNames[month - 1]} ${year}`;
   };
@@ -42,9 +53,10 @@ const BackCampaignPage = ({ params }) => {
   useEffect(() => {
     const fetchCampaign = async () => {
       try {
-        setLoading(true);
+        setLoadingPage(true);
         const campaignData = await getCampaignById(params.id);
         setCampaign(campaignData);
+        console.log(campaignData);
 
         const backersList = await getBackersByCampaignId(params.id);
         setBackers(backersList);
@@ -64,21 +76,25 @@ const BackCampaignPage = ({ params }) => {
         console.error("Failed to fetch campaign:", err);
         setError("Could not load campaign details.");
       } finally {
-        setLoading(false);
+        setLoadingPage(false);
       }
     };
     fetchCampaign();
   }, [params.id]);
 
-  useEffect(()=>{
+  useEffect(() => {
     connectWallet();
-  }, [])
+  }, []);
 
   const handleWithdraw = async () => {
     try {
-      await withdrawFunds(params.id);
-      alert("Funds withdrawn successfully!");
-      setIsWithdrawn(true); // Update the state after withdrawal
+      const success = await withdrawFunds(params.id);
+      if (success) {
+        window.location.reload();
+      } else{
+        alert("Some error occured!");
+      }
+      // Update the state after withdrawal
     } catch (error) {
       console.error("Withdraw failed:", error);
       alert("Failed to withdraw funds.");
@@ -97,15 +113,16 @@ const BackCampaignPage = ({ params }) => {
   };
 
   // Loading state
-  if (loading)
+  if (loadingPage)
     return (
-      <div className="flex flex-col items-center min-h-screen py-12 px-6">
-        <div className="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-lg rounded-lg p-10">
-          <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-8 text-center">
+      <div className="flex flex-col items-center min-h-screen py-6 px-4 lg:py-12 lg:px-6">
+        <MetaMaskLoader loading={loading} />
+        <div className="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 lg:p-10">
+          <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-6 lg:mb-8 text-center">
             <Skeleton className="h-8 w-2/4 mb-4" />
           </h1>
 
-          <div className="text-gray-700 dark:text-gray-300 mb-8 space-y-4">
+          <div className="text-gray-700 dark:text-gray-300 mb-6 lg:mb-8 space-y-2 lg:space-y-4">
             <Skeleton className="h-6 w-full mb-2" />
             <Skeleton className="h-6 w-1/2 mb-2" />
             <Skeleton className="h-6 w-1/3 mb-2" />
@@ -113,10 +130,8 @@ const BackCampaignPage = ({ params }) => {
             <Skeleton className="h-6 w-1/2 mb-2" />
           </div>
 
-          <div className="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
-             
-            </h2>
+          <div className="bg-gray-50 dark:bg-gray-700 p-4 lg:p-5 rounded-lg mb-6 lg:mb-8">
+            <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4"></h2>
             <Skeleton className="h-6 w-full mb-2" />
             <Skeleton className="h-6 w-full mb-2" />
           </div>
@@ -125,7 +140,7 @@ const BackCampaignPage = ({ params }) => {
           <Skeleton className="h-4 w-full mb-4" />
           <Skeleton className="h-4 w-full mb-4" />
 
-          <div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-5 mb-8">
+          <div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-4 lg:p-5 mb-6 lg:mb-8">
             <p className="font-semibold"></p>
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-3/4 mb-2" />
@@ -141,16 +156,18 @@ const BackCampaignPage = ({ params }) => {
       </div>
     );
 
-  const isDeadlinePassed = Date.now() > new Date(campaign.deadline).getTime();
+    const isDeadlinePassed = Date.now() >= new Date(campaign.deadline).getTime();
+
 
   return (
-    <div className="flex flex-col items-center min-h-screen py-12 px-6 ">
-      <div className="w-full max-w-4xl bg-white dark:bg-gray-800  shadow-[5px_4px_8px_5px_rgba(0,0,0,0.2)] rounded-lg p-10">
-        <h1 className="text-4xl font-bold text-gray-800 dark:text-gray-200 mb-8 text-center">
+    <div className="flex flex-col items-center min-h-screen py-6 px-4 lg:py-12 lg:px-6">
+      <MetaMaskLoader loading={loading} />
+      <div className="w-full max-w-4xl bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 lg:p-10">
+        <h1 className="text-3xl lg:text-4xl font-bold text-gray-800 dark:text-gray-200 mb-6 lg:mb-8 text-center">
           {campaign.title}
         </h1>
 
-        <div className="text-gray-700 dark:text-gray-300 mb-8 space-y-4">
+        <div className="text-gray-700 dark:text-gray-300 mb-6 lg:mb-8 space-y-2 lg:space-y-4">
           <p>{campaign.description}</p>
           <p className="mt-2">
             <strong>Target Amount:</strong> {campaign.target} AIA
@@ -169,10 +186,11 @@ const BackCampaignPage = ({ params }) => {
           <p className="mt-2">
             <strong>Type:</strong> {campaign.campaignType}
           </p>
+          <p className="mt-2"> <strong> Owner: </strong> {campaign.owner} </p>
         </div>
 
-        <div className="bg-gray-50 dark:bg-gray-700 p-5 rounded-lg mb-8">
-          <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
+        <div className="bg-gray-50 dark:bg-gray-700 p-4 lg:p-5 rounded-lg mb-6 lg:mb-8">
+          <h2 className="text-xl lg:text-2xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
             Funded By:
           </h2>
           {backers.length > 0 ? (
@@ -182,7 +200,9 @@ const BackCampaignPage = ({ params }) => {
                   key={index}
                   className="flex justify-between text-gray-600 dark:text-gray-300"
                 >
-                  <span>{backer.address}</span>
+                  <span className="truncate w-1/2 sm:w-auto">
+                    {backer.address}
+                  </span>
                   <span>{backer.amount} AIA</span>
                 </li>
               ))}
@@ -212,68 +232,96 @@ const BackCampaignPage = ({ params }) => {
           ></div>
         </div>
 
-       
-
-{account?.toLowerCase() === campaign.owner.toLowerCase() && 
-  ((!isFullyFunded && !isDeadlinePassed) && !isWithdrawn && !isRepaid) && (
+        {account?.toLowerCase() === campaign.owner.toLowerCase() &&
+  !isFullyFunded &&
+  !isDeadlinePassed && (
     <p className="text-gray-500 dark:text-gray-400 italic mb-6">
-      Once the campaign is fully funded or the deadline has passed you
-      can withdraw the funds!
+      Once the campaign is fully funded or the deadline has passed, you can withdraw the funds!
     </p>
-)}
+  )}
 
-{isFullyFunded && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase() && (
-  <p className="text-gray-500 dark:text-gray-400 mb-4">
-    Congratulations! Your campaign got fully funded, you can withdraw
-    the funds to your wallet address now.
-  </p>
-)}
-
-{isDeadlinePassed && !isFullyFunded && !isWithdrawn && (
-  <p className="text-gray-500 dark:text-gray-400 mb-4">
-    The deadline has passed. You may withdraw the funds now.
-  </p>
-)}
-
-{isRepaid && account?.toLowerCase() === campaign.owner.toLowerCase() && (
-  <div className="bg-green-100 dark:bg-green-700 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-200 p-5 mb-8">
-    <p className="font-semibold">Thank You!</p>
-    <p className="text-sm mt-2 leading-relaxed">
-      Thank you for repaying your loan and maintaining the trust within our community. We appreciate your commitment to upholding transparency and trust on Plaia Zone.
+{account?.toLowerCase() === campaign.owner.toLowerCase() &&
+  isFullyFunded &&
+  !isDeadlinePassed && (
+    <p className="text-gray-500 dark:text-gray-400 mb-4">
+      Congratulations! Your campaign got fully funded, you can withdraw the funds to your wallet address {account} now.
     </p>
-  </div>
-)}
+  )}
 
+{account?.toLowerCase() === campaign.owner.toLowerCase() &&
+  !isFullyFunded &&
+  isDeadlinePassed && (
+    <p className="text-gray-500 dark:text-gray-400 mb-4">
+      Your campaign didn't get 100% funded, however you can withdraw the funds to your wallet address {account} now.
+    </p>
+  )}
+
+{account?.toLowerCase() === campaign.owner.toLowerCase() &&
+  campaign.campaignType === "Loan" &&
+  isFullyFunded &&
+  !isDeadlinePassed && (
+    <p className="text-gray-500 dark:text-gray-400 mb-4">
+      Congratulations! Your campaign got fully funded, you can withdraw the funds to your wallet address {account} now. Please remember to repay the loan.
+    </p>
+  )}
+
+{account?.toLowerCase() !== campaign.owner.toLowerCase() &&
+  isFullyFunded &&
+  !isDeadlinePassed && (
+    <p className="text-gray-500 dark:text-gray-400 mb-4">
+      This campaign was 100% funded before the deadline!
+    </p>
+  )}
+
+{account?.toLowerCase() !== campaign.owner.toLowerCase() &&
+  isDeadlinePassed &&
+  !isFullyFunded && (
+    <p className="text-gray-500 dark:text-gray-400 mb-4">
+      The deadline of this campaign passed before it got fully funded.
+    </p>
+  )}
+
+{/* Existing Check for Repaid Loan (for Owner) */}
+{isRepaid &&
+  account?.toLowerCase() === campaign.owner.toLowerCase() && (
+    <div className="bg-green-100 dark:bg-green-700 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-200 p-5 mb-8">
+      <p className="font-semibold">Thank You!</p>
+      <p className="text-sm mt-2 leading-relaxed">
+        Thank you for repaying your loan and maintaining the trust within our community. We appreciate your commitment to upholding transparency and trust on Plaia Zone.
+      </p>
+    </div>
+  )}
+
+{/* Existing Check for Repaid Loan (for Non-Owner) */}
 {account?.toLowerCase() !== campaign.owner.toLowerCase() && isRepaid && (
   <div className="bg-green-100 dark:bg-green-700 border-l-4 border-green-500 dark:border-green-400 text-green-700 dark:text-green-200 p-5 mb-8">
     <p className="font-semibold">Loan Repaid</p>
     <p className="text-sm mt-2 leading-relaxed">
-      Plaia Zone thanks the campaign owner for fulfilling their commitment by repaying the loan. This action strengthens the trust and integrity within our community. 
+      Plaia Zone thanks the campaign owner for fulfilling their commitment by repaying the loan. This action strengthens the trust and integrity within our community.
     </p>
   </div>
 )}
 
-
+{/* Withdraw and Repay Loan Buttons */}
 {isFullyFunded && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase() && (
   <button
     onClick={handleWithdraw}
-    className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition mb-4"
+    className="bg-blue-600 flex justify-center items-center text-white px-8 py-3 rounded-md hover:bg-blue-700 transition mb-4"
   >
     Withdraw Funds
   </button>
 )}
 
-{isDeadlinePassed && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase()  && (
+{isDeadlinePassed && !isWithdrawn && account?.toLowerCase() === campaign.owner.toLowerCase() && (
   <button
     onClick={handleWithdraw}
-    className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 transition mb-4"
+    className="bg-blue-600 flex justify-center items-center text-white px-8 py-3 rounded-md hover:bg-blue-700 transition mb-4"
   >
     Withdraw Funds
   </button>
 )}
 
-
-{campaign.campaignType === "Loan" &&
+{campaign.campaignType === "Loan" && account?.toLowerCase() === campaign.owner.toLowerCase() &&
   (isFullyFunded || isDeadlinePassed) && !isRepaid && (
     <button
       onClick={handleRepayLoan}
@@ -283,7 +331,7 @@ const BackCampaignPage = ({ params }) => {
     </button>
 )}
 
-<div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-5 mb-8">
+        <div className="bg-yellow-100 dark:bg-yellow-700 border-l-4 border-yellow-500 dark:border-yellow-400 text-yellow-700 dark:text-yellow-200 p-5 mt-8 mb-8">
           <p className="font-semibold">Terms and Conditions</p>
           <p className="text-sm mt-2 leading-relaxed">
             Plaia Zone is primarily intended for donations to support gamers.
@@ -294,18 +342,16 @@ const BackCampaignPage = ({ params }) => {
           </p>
         </div>
 
- 
-        {account?.toLowerCase() !== campaign.owner.toLowerCase() &&
-          !isFullyFunded &&
-          !isDeadlinePassed && (
-            <FundCampaignDialog
-              title={campaign.title}
-              campaignId={campaign.id}
-              remainingAmount={remaining}
-            />
-          )}
-
-
+        {/* Contribute Button for Non-Owner */}
+{account?.toLowerCase() !== campaign.owner.toLowerCase() &&
+  !isFullyFunded &&
+  !isDeadlinePassed && (
+    <FundCampaignDialog
+      title={campaign.title}
+      campaignId={campaign.id}
+      remainingAmount={remaining}
+    />
+  )}
       </div>
     </div>
   );

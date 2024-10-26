@@ -24,14 +24,14 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <ThemeProvider>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased px-24 dark:bg-[#1f2022]`}
-      >
-           <PlaiaZoneProvider>  {children} <DarkModeToggle/></PlaiaZoneProvider>
-      
-
-       
-      </body>
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} antialiased px-6 md:px-12 lg:px-24 dark:bg-[#1f2022]`}
+        >
+          <PlaiaZoneProvider>
+            {children}
+            <DarkModeToggle />
+          </PlaiaZoneProvider>
+        </body>
       </ThemeProvider>
     </html>
   );

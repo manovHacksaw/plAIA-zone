@@ -294,16 +294,19 @@ export const PlaiaZoneProvider = ({ children }) => {
 
   const withdrawFunds = async (id) => {
     try {
+      setLoading(true);
       const signer = await provider.getSigner();
       const contract = await loadContract(signer);
 
       const transaction = await contract.withdrawFunds(id);
       await transaction.wait();
 
-      alert("Funds withdrawn successfully!");
+      setLoading(false);
+      return true;
     } catch (error) {
       console.error("Error withdrawing funds:", error);
-      alert("Failed to withdraw funds. Please try again.");
+      setLoading(false)
+      return false;
     }
   };
 
