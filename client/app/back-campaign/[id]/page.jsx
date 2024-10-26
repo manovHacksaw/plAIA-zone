@@ -156,7 +156,14 @@ const BackCampaignPage = ({ params }) => {
       </div>
     );
 
-    const isDeadlinePassed = Date.now() >= new Date(campaign.deadline).getTime();
+    const parseDate = (dateString) => {
+      const [day, month, year] = dateString.split('/').map(Number);
+      return new Date(year, month - 1, day); // Month is 0-indexed
+    };
+    
+    const campaignDeadline = parseDate(campaign.deadline);
+    const isDeadlinePassed = Date.now() >= campaignDeadline.getTime();
+    console.log(campaignDeadline)
 
 
   return (
